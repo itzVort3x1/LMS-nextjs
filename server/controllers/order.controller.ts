@@ -79,7 +79,7 @@ export const createOrder = CatchAsyncError(
 				message: `You have a new order from ${course?.name}`,
 			});
 
-			if (course.purchased) {
+			if (course.purchased || course.purchased === 0) {
 				course.purchased += 1;
 			}
 
