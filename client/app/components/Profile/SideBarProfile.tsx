@@ -71,6 +71,7 @@ const SideBarProfile: FC<Props> = ({
 						active === 6 ? "dark:bg-slate-800 bg-white" : "bg-transparent"
 					}`}
 					href={"/admin"}
+					onClick={() => setActive(6)}
 				>
 					<MdOutlineAdminPanelSettings
 						size={20}
