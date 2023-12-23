@@ -144,10 +144,10 @@ const Sidebar = () => {
 									alt="profile-user"
 									width={80}
 									height={80}
+									className="w-[80px] h-[80px] rounded-full"
 									src={user.avatar ? user.avatar.url : avatarDefault}
 									style={{
 										cursor: "pointer",
-										borderRadius: "50%",
 										border: "3px solid #5b6fe6",
 									}}
 								/>
