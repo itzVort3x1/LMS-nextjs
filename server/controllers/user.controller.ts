@@ -186,6 +186,7 @@ export const logoutUser = CatchAsyncError(
 export const updateAccessToken = CatchAsyncError(
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
+			console.log(req.body);
 			const refresh_token = req.cookies.refresh_token as string;
 			const decoded = jwt.verify(
 				refresh_token,
@@ -225,10 +226,7 @@ export const updateAccessToken = CatchAsyncError(
 
 			await redis.set(user?._id, JSON.stringify(user), "EX", 604800); // 7 Days
 
-			res.status(200).json({
-				status: "success",
-				accessToken,
-			});
+			next();
 		} catch (error: any) {
 			return next(new ErrorHandler(error.message, 400));
 		}
