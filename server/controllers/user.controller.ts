@@ -186,7 +186,6 @@ export const logoutUser = CatchAsyncError(
 export const updateAccessToken = CatchAsyncError(
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			console.log(req.body);
 			const refresh_token = req.cookies.refresh_token as string;
 			const decoded = jwt.verify(
 				refresh_token,
