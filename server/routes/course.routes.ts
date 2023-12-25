@@ -12,6 +12,7 @@ import {
 	getCourseByUser,
 	getSingleCourse,
 	uploadCourse,
+	getAllCoursesAdmin,
 } from "../controllers/course.controller";
 import { updateAccessToken } from "../controllers/user.controller";
 const courseRouter = express.Router();
@@ -33,6 +34,12 @@ courseRouter.put(
 
 courseRouter.get("/get-course/:id", getSingleCourse);
 courseRouter.get("/get-courses", getAllCourses);
+courseRouter.get(
+	"/get-admin-courses",
+	isAuthenticated,
+	authorizeRoles("admin"),
+	getAllCoursesAdmin
+);
 courseRouter.get(
 	"/get-course-content/:id",
 	updateAccessToken,
@@ -61,14 +68,6 @@ courseRouter.put(
 );
 
 courseRouter.post("/getVdoCipherOTP", generateVideoUrl);
-
-courseRouter.get(
-	"/get-courses",
-	updateAccessToken,
-	isAuthenticated,
-	authorizeRoles("admin"),
-	addReview
-);
 
 courseRouter.delete(
 	"/delete-course/:id",
