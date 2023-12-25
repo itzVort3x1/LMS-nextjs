@@ -18,6 +18,7 @@ layoutRouter.post(
 
 layoutRouter.put(
 	"/edit-layout",
+	updateAccessToken,
 	isAuthenticated,
 	updateAccessToken,
 	authorizeRoles("admin"),
