@@ -50,7 +50,7 @@ const CourseAnalytics = (props: Props) => {
 							Courses Analytics
 						</h1>
 						<p className={`${styles.label} px-5`}>
-							Last 12 months analytics data{" "}
+							Last 6 months analytics data{" "}
 						</p>
 					</div>
 
