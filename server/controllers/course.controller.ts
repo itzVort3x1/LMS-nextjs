@@ -106,7 +106,7 @@ export const getSingleCourse = CatchAsyncError(
 
 				res.status(200).json({
 					success: true,
-					course,
+					data: course,
 				});
 			}
 		} catch (error: any) {

@@ -55,8 +55,6 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 		}
 	}, [data, user]);
 
-	console.log(data);
-
 	if (typeof window !== "undefined") {
 		window.addEventListener("scroll", () => {
 			if (window.scrollY > 80) {
@@ -72,8 +70,6 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 			setOpenSidebar(false);
 		}
 	};
-
-	console.log(user);
 
 	return (
 		<div className="w-full relative">
