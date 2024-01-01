@@ -16,7 +16,7 @@ notificationRouter.get(
 );
 
 notificationRouter.put(
-	"/update-notifications/:id",
+	"/update-notification/:id",
 	updateAccessToken,
 	isAuthenticated,
 	authorizeRoles("admin"),

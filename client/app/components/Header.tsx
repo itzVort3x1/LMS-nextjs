@@ -16,6 +16,7 @@ import {
 	useSocialAuthMutation,
 } from "@/redux/features/auth/authApi";
 import toast from "react-hot-toast";
+import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
 
 type Props = {
 	open: boolean;
@@ -28,6 +29,11 @@ type Props = {
 const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 	const [active, setActive] = useState(false);
 	const [openSidebar, setOpenSidebar] = useState(false);
+	const {
+		data: userData,
+		isLoading,
+		refetch,
+	} = useLoadUserQuery(undefined, {});
 	const { user } = useSelector((state: any) => state.auth);
 	const { data } = useSession();
 	const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
@@ -36,24 +42,27 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 	const {} = useLogOutQuery(undefined, { skip: !logout ? true : false });
 
 	useEffect(() => {
-		if (!user) {
-			if (data) {
-				socialAuth({
-					email: data?.user?.email,
-					name: data?.user?.name,
-					avatar: data?.user?.image,
-				});
+		if (!isLoading) {
+			if (!userData) {
+				if (data) {
+					socialAuth({
+						email: data?.user?.email,
+						name: data?.user?.name,
+						avatar: data.user?.image,
+					});
+					refetch();
+				}
+			}
+			if (data === null) {
+				if (isSuccess) {
+					toast.success("Login Successfully");
+				}
+			}
+			if (data === null && !isLoading && !userData) {
+				setLogout(true);
 			}
 		}
-		if (data === null) {
-			if (isSuccess) {
-				toast.success("Login successful");
-			}
-		}
-		if (data === null) {
-			setLogout(true);
-		}
-	}, [data, user]);
+	}, [data, userData, isLoading]);
 
 	if (typeof window !== "undefined") {
 		window.addEventListener("scroll", () => {
@@ -101,10 +110,12 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 									onClick={() => setOpenSidebar(true)}
 								/>
 							</div>
-							{user ? (
+							{userData ? (
 								<Link href={"/profile"}>
 									<Image
-										src={user.avatar ? user.avatar.url : avatar}
+										src={
+											userData?.user.avatar ? userData.user.avatar.url : avatar
+										}
 										alt=""
 										width={30}
 										height={30}
@@ -156,6 +167,7 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, route, setRoute }) => {
 							setRoute={setRoute}
 							activeItem={activeItem}
 							component={Login}
+							refetch={refetch}
 						/>
 					)}
 				</>

@@ -34,7 +34,6 @@ const CheckOutForm = ({ data, user, refetch }: Props) => {
 			return;
 		}
 		setIsLoading(true);
-		console.log("elemts", elements);
 		const { error, paymentIntent } = await stripe.confirmPayment({
 			elements,
 			redirect: "if_required",
