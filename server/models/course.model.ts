@@ -65,11 +65,14 @@ const linkSchema = new Schema<ILink>({
 	url: String,
 });
 
-const commentSchema = new Schema<IComment>({
-	user: Object,
-	question: String,
-	questionReplies: [Object],
-});
+const commentSchema = new Schema<IComment>(
+	{
+		user: Object,
+		question: String,
+		questionReplies: [Object],
+	},
+	{ timestamps: true }
+);
 
 const courseDataSchema = new Schema<ICourseData>({
 	videoUrl: String,
@@ -94,7 +97,6 @@ const courseSchema = new Schema<ICourse>(
 		},
 		categories: {
 			type: String,
-			required: true,
 		},
 		price: {
 			type: Number,

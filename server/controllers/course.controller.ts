@@ -172,6 +172,7 @@ export const addQuestion = CatchAsyncError(
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const { question, courseId, contentId }: IAddQuerstionData = req.body;
+			console.log(req.user);
 			const course = await CourseModel.findById(courseId);
 
 			if (!mongoose.Types.ObjectId.isValid(contentId)) {
