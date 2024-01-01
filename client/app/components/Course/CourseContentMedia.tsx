@@ -80,6 +80,10 @@ const CourseContentMedia = ({
 			setQuestion("");
 			refetch();
 		}
+		if (answerSuccess) {
+			setAnswer("");
+			refetch();
+		}
 		if (error) {
 			if ("data" in error) {
 				const errorMessage = error as any;

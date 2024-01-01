@@ -1,17 +1,17 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { IUser } from "./user.model";
 
-interface IComment extends Document {
+export interface IComment extends Document {
 	user: IUser;
 	question: string;
-	questionReplies?: IComment[];
+	questionReplies: IComment[];
 }
 
 interface IReview extends Document {
 	user: IUser;
-	rating: number;
+	rating?: number;
 	comment: string;
-	commentReplies?: IComment[];
+	commentReplies?: IReview[];
 }
 
 interface ILink extends Document {
@@ -32,7 +32,7 @@ interface ICourseData extends Document {
 	questions: IComment[];
 }
 
-interface ICourse extends Document {
+export interface ICourse extends Document {
 	name: string;
 	description: string;
 	categories: string;
@@ -45,20 +45,23 @@ interface ICourse extends Document {
 	benefits: { title: string }[];
 	prerequisites: { title: string }[];
 	reviews: IReview[];
-	courseData: ICourseData;
+	courseData: ICourseData[];
 	ratings?: number;
-	purchased?: number;
+	purchased: number;
 }
 
-const reviewSchema = new Schema<IReview>({
-	user: Object,
-	rating: {
-		type: Number,
-		default: 0,
+const reviewSchema = new Schema<IReview>(
+	{
+		user: Object,
+		rating: {
+			type: Number,
+			default: 0,
+		},
+		comment: String,
+		commentReplies: [Object],
 	},
-	comment: String,
-	commentReplies: [Object],
-});
+	{ timestamps: true }
+);
 
 const linkSchema = new Schema<ILink>({
 	title: String,
@@ -76,8 +79,10 @@ const commentSchema = new Schema<IComment>(
 
 const courseDataSchema = new Schema<ICourseData>({
 	videoUrl: String,
+	videoThumbnail: Object,
 	title: String,
 	videoSection: String,
+	description: String,
 	videoLength: Number,
 	videoPlayer: String,
 	links: [linkSchema],
@@ -114,8 +119,8 @@ const courseSchema = new Schema<ICourse>(
 			},
 		},
 		tags: {
-			required: true,
 			type: String,
+			required: true,
 		},
 		level: {
 			type: String,
