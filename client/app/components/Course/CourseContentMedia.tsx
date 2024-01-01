@@ -1,21 +1,28 @@
 import { styles } from "@/app/styles/style";
 import CoursePlayer from "@/app/utils/CoursePlayer";
+import {
+	useAddAnswerInQuestionMutation,
+	useAddNewQuestionMutation,
+	useAddReplyInReviewMutation,
+	useAddReviewInCourseMutation,
+	useGetCourseDetailsQuery,
+} from "@/redux/features/courses/coursesApi";
+import Image from "next/image";
+import { format } from "timeago.js";
 import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import {
 	AiFillStar,
 	AiOutlineArrowLeft,
 	AiOutlineArrowRight,
 	AiOutlineStar,
 } from "react-icons/ai";
-import Image from "next/image";
-import toast from "react-hot-toast";
-import {
-	useAddAnswerInQuestionMutation,
-	useAddNewQuestionMutation,
-} from "@/redux/features/courses/coursesApi";
 import { BiMessage } from "react-icons/bi";
 import { VscVerifiedFilled } from "react-icons/vsc";
-import { format } from "timeago.js";
+import Ratings from "@/app/utils/Ratings";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 type Props = {
 	data: any;
@@ -48,7 +55,10 @@ const CourseContentMedia = ({
 		addNewQuestion,
 		{ isSuccess, error, isLoading: questionCreationLoading },
 	] = useAddNewQuestionMutation();
-
+	const { data: courseData, refetch: courseRefetch } = useGetCourseDetailsQuery(
+		id,
+		{ refetchOnMountOrArgChange: true }
+	);
 	const [
 		addAnswerInQuestion,
 		{
@@ -57,8 +67,26 @@ const CourseContentMedia = ({
 			isLoading: answerCreationLoading,
 		},
 	] = useAddAnswerInQuestionMutation();
+	const course = courseData?.course;
+	const [
+		addReviewInCourse,
+		{
+			isSuccess: reviewSuccess,
+			error: reviewError,
+			isLoading: reviewCreationLoading,
+		},
+	] = useAddReviewInCourseMutation();
 
-	const isReviewExists = data?.reviews?.find(
+	const [
+		addReplyInReview,
+		{
+			isSuccess: replySuccess,
+			error: replyError,
+			isLoading: replyCreationLoading,
+		},
+	] = useAddReplyInReviewMutation();
+
+	const isReviewExists = course?.reviews?.find(
 		(item: any) => item.user._id === user._id
 	);
 
@@ -66,7 +94,6 @@ const CourseContentMedia = ({
 		if (question.length === 0) {
 			toast.error("Question can't be empty");
 		} else {
-			console.log({ question, courseId: id, contentId: data[activeVideo] });
 			addNewQuestion({
 				question,
 				courseId: id,
@@ -79,10 +106,22 @@ const CourseContentMedia = ({
 		if (isSuccess) {
 			setQuestion("");
 			refetch();
+			socketId.emit("notification", {
+				title: `New Question Received`,
+				message: `You have a new question in ${data[activeVideo].title}`,
+				userId: user._id,
+			});
 		}
 		if (answerSuccess) {
 			setAnswer("");
 			refetch();
+			if (user.role !== "admin") {
+				socketId.emit("notification", {
+					title: `New Reply Received`,
+					message: `You have a new question in ${data[activeVideo].title}`,
+					userId: user._id,
+				});
+			}
 		}
 		if (error) {
 			if ("data" in error) {
@@ -96,7 +135,44 @@ const CourseContentMedia = ({
 				toast.error(errorMessage.data.message);
 			}
 		}
-	}, [isSuccess, error, answerSuccess, answerError]);
+		if (reviewSuccess) {
+			setReview("");
+			setRating(1);
+			courseRefetch();
+			socketId.emit("notification", {
+				title: `New Question Received`,
+				message: `You have a new question in ${data[activeVideo].title}`,
+				userId: user._id,
+			});
+		}
+		if (reviewError) {
+			if ("data" in reviewError) {
+				const errorMessage = error as any;
+				toast.error(errorMessage.data.message);
+			}
+		}
+		if (replySuccess) {
+			setReply("");
+			courseRefetch();
+			toast.success("Reply added successfully");
+		}
+		if (replyError) {
+			if ("data" in replyError) {
+				console.log(replyError);
+				const errorMessage = error as any;
+				toast.error(errorMessage.data.message);
+			}
+		}
+	}, [
+		isSuccess,
+		error,
+		answerSuccess,
+		answerError,
+		reviewSuccess,
+		reviewError,
+		replySuccess,
+		replyError,
+	]);
 
 	const handleAnswerSubmit = () => {
 		addAnswerInQuestion({
@@ -107,22 +183,42 @@ const CourseContentMedia = ({
 		});
 	};
 
+	const handleReviewSubmit = async () => {
+		if (review.length === 0) {
+			toast.error("Review can't be empty");
+		} else {
+			addReviewInCourse({ review, rating, courseId: id });
+		}
+	};
+
+	const handleReviewReplySubmit = () => {
+		if (!replyCreationLoading) {
+			if (reply === "") {
+				toast.error("Reply can't be empty");
+			} else {
+				addReplyInReview({ comment: reply, courseId: id, reviewId });
+			}
+		}
+	};
+
+	console.log(course);
+
 	return (
 		<div className="w-[95%] 800px:w-[86%] py-4 m-auto">
 			<CoursePlayer
 				title={data[activeVideo]?.title}
 				videoUrl={data[activeVideo]?.videoUrl}
 			/>
-			<div className="w-full flex item-center justify-between my-3">
+			<div className="w-full flex items-center justify-between my-3">
 				<div
 					className={`${
 						styles.button
-					} dark:text-white text-black !w-[unset] !min-h-[40px] !py-[unset] ${
+					} text-white  !w-[unset] !min-h-[40px] !py-[unset] ${
 						activeVideo === 0 && "!cursor-no-drop opacity-[.8]"
 					}`}
-					onClick={() => {
-						setActiveVideo(activeVideo === 0 ? 0 : activeVideo - 1);
-					}}
+					onClick={() =>
+						setActiveVideo(activeVideo === 0 ? 0 : activeVideo - 1)
+					}
 				>
 					<AiOutlineArrowLeft className="mr-2" />
 					Prev Lesson
@@ -130,22 +226,22 @@ const CourseContentMedia = ({
 				<div
 					className={`${
 						styles.button
-					} dark:text-white text-black !w-[unset] !min-h-[40px] !py-[unset] ${
+					} !w-[unset] text-white  !min-h-[40px] !py-[unset] ${
 						data.length - 1 === activeVideo && "!cursor-no-drop opacity-[.8]"
 					}`}
-					onClick={() => {
+					onClick={() =>
 						setActiveVideo(
 							data && data.length - 1 === activeVideo
 								? activeVideo
-								: activeVideo - 1
-						);
-					}}
+								: activeVideo + 1
+						)
+					}
 				>
 					Next Lesson
 					<AiOutlineArrowRight className="ml-2" />
 				</div>
 			</div>
-			<h1 className="dark:text-white text-black pt-2 text-25[px] font-[600]">
+			<h1 className="pt-2 text-[25px] font-[600] dark:text-white text-black ">
 				{data[activeVideo].title}
 			</h1>
 			<br />
@@ -304,12 +400,11 @@ const CourseContentMedia = ({
 										className={`${
 											styles.button
 										} !w-[120px] !h-[40px] text-[18px] mt-5 800px:mr-0 mr-2 ${
-											// reviewCreationLoading && "cursor-no-drop"
-											""
+											reviewCreationLoading && "cursor-no-drop"
 										}`}
-										// onClick={
-										// 	reviewCreationLoading ? () => {} : handleReviewSubmit
-										// }
+										onClick={
+											reviewCreationLoading ? () => {} : handleReviewSubmit
+										}
 									>
 										Submit
 									</div>
@@ -318,7 +413,7 @@ const CourseContentMedia = ({
 						)}
 						<br />
 						<div className="w-full h-[1px] bg-[#ffffff3b]"></div>
-						{/* <div className="w-full">
+						<div className="w-full">
 							{(course?.reviews && [...course.reviews].reverse())?.map(
 								(item: any, index: number) => {
 									return (
@@ -415,7 +510,7 @@ const CourseContentMedia = ({
 									);
 								}
 							)}
-						</div> */}
+						</div>
 					</>
 				</div>
 			)}
@@ -466,7 +561,6 @@ const CommentItem = ({
 	answerCreationLoading,
 }: any) => {
 	const [replyActive, setreplyActive] = useState(false);
-	console.log(item);
 	return (
 		<>
 			<div className="my-4">
@@ -544,7 +638,7 @@ const CommentItem = ({
 									</div>
 									<p>{item.answer}</p>
 									<small className="text-[#ffffff83]">
-										{!item.createdAt ? "" : format(item.createdAt)} •
+										{format(item.createdAt)} •
 									</small>
 								</div>
 							</div>
